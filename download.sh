@@ -17,7 +17,7 @@ fetch_clip() {
   if [ $? -eq 0 ]; then
     # If we don't pipe `yes`, ffmpeg seems to steal a
     # character from stdin. I have no idea why.
-    yes | ffmpeg  -i "./$outname.wav" -ar $SAMPLE_RATE \
+    yes | ffmpeg -loglevel quiet -i "./$outname.wav" -ar $SAMPLE_RATE \
       -ss "$2" -to "$3" "./${outname}_out.wav"
     mv "./${outname}_out.wav" "./$outname.wav"
     gzip "./$outname.wav"
