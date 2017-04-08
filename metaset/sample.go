@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gonum/blas/blas64"
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/wav"
 )
@@ -35,26 +36,38 @@ func (s *Sample) Read() ([]float64, error) {
 		source = f
 	}
 
-	sound, err := wav.ReadSound(source)
+	data, err := readAndMix(source)
 	if err != nil {
+		source.Close()
 		return nil, essentials.AddCtx("read "+s.Path, err)
 	}
-
 	if err := source.Close(); err != nil {
 		return nil, essentials.AddCtx("read "+s.Path, err)
 	}
+	return data, nil
+}
+
+func readAndMix(r io.Reader) ([]float64, error) {
+	sound, err := wav.ReadSound(r)
+	if err != nil {
+		return nil, err
+	}
 
 	samps := sound.Samples()
-	ch := sound.Channels()
-	if len(samps)%ch != 0 {
-		return nil, errors.New("read " + s.Path + ": bad sample count")
+	numChan := sound.Channels()
+	if len(samps)%numChan != 0 {
+		return nil, errors.New("bad sample count")
 	}
 
 	// Quick and dirty channel mixing.
-	res := make([]float64, len(samps)/ch)
-	for i, x := range samps {
-		res[i/ch] += float64(x) / float64(ch)
+	res := make([]float64, len(samps)/numChan)
+	for ch := 0; ch < numChan; ch++ {
+		for i := range res {
+			res[i] += float64(samps[i*numChan+ch])
+		}
 	}
+
+	blas64.Scal(len(res), 1/float64(numChan), blas64.Vector{Data: res, Inc: 1})
 
 	return res, nil
 }
