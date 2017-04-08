@@ -7,6 +7,7 @@ import (
 	"github.com/unixpickle/anynet/anys2s"
 	"github.com/unixpickle/anynet/anysgd"
 	"github.com/unixpickle/anyvec"
+	"github.com/unixpickle/anyvec/anyvec64"
 	"github.com/unixpickle/essentials"
 )
 
@@ -87,11 +88,12 @@ type Trainer struct {
 // Fetch produces a *Batch with random episodes.
 // The s argument is only used to get the batch size.
 func (t *Trainer) Fetch(s anysgd.SampleList) (anysgd.Batch, error) {
+	c := anyvec64.DefaultCreator{}
 	var in [][]anyvec.Vector
 	var out [][]anyvec.Vector
 	for i := 0; i < s.Len(); i++ {
 		batch, labels := t.Set.Episode(t.NumClasses, t.NumSteps)
-		seq, err := Seq(t.Creator, batch, t.ChunkSize)
+		seq, err := Seq(c, batch, t.ChunkSize)
 		if err != nil {
 			return nil, essentials.AddCtx("fetch samples", err)
 		}
@@ -101,14 +103,13 @@ func (t *Trainer) Fetch(s anysgd.SampleList) (anysgd.Batch, error) {
 		for _, label := range labels {
 			oneHot := make([]float64, t.NumClasses)
 			oneHot[label] = 1
-			numList := t.Creator.MakeNumericList(oneHot)
-			outSeq = append(outSeq, t.Creator.MakeVectorData(numList))
+			outSeq = append(outSeq, c.MakeVectorData(oneHot))
 		}
 		out = append(out, outSeq)
 	}
 	return &Batch{
-		Samples: anyseq.ConstSeqList(t.Creator, in),
-		Labels:  anyseq.ConstSeqList(t.Creator, out),
+		Samples: convertSeq(t.Creator, anyseq.ConstSeqList(c, in)),
+		Labels:  convertSeq(t.Creator, anyseq.ConstSeqList(c, out)),
 	}, nil
 }
 
@@ -187,4 +188,16 @@ func episodeSeq(features anydiff.Res, labelSeq anyseq.Seq) anyseq.Seq {
 	}
 
 	return anyseq.ResSeq(labelSeq.Creator(), resBatches)
+}
+
+func convertSeq(c anyvec.Creator, inSeqs anyseq.Seq) anyseq.Seq {
+	batches := []*anyseq.Batch{}
+	for _, batch := range inSeqs.Output() {
+		vec := c.MakeVectorData(c.MakeNumericList(batch.Packed.Data().([]float64)))
+		batches = append(batches, &anyseq.Batch{
+			Packed:  vec,
+			Present: batch.Present,
+		})
+	}
+	return anyseq.ConstSeq(c, batches)
 }
