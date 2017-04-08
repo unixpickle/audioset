@@ -61,13 +61,22 @@ func readAndMix(r io.Reader) ([]float64, error) {
 
 	// Quick and dirty channel mixing.
 	res := make([]float64, len(samps)/numChan)
-	for ch := 0; ch < numChan; ch++ {
-		for i := range res {
-			res[i] += float64(samps[i*numChan+ch])
+	if numChan == 1 {
+		for i, x := range samps {
+			res[i] = float64(x)
 		}
+	} else if numChan == 2 {
+		for i := 0; i < len(samps); i += 2 {
+			res[i>>1] = float64(samps[i]+samps[i+1]) / 2
+		}
+	} else {
+		for ch := 0; ch < numChan; ch++ {
+			for i := range res {
+				res[i] += float64(samps[i*numChan+ch])
+			}
+		}
+		blas64.Scal(len(res), 1/float64(numChan), blas64.Vector{Data: res, Inc: 1})
 	}
-
-	blas64.Scal(len(res), 1/float64(numChan), blas64.Vector{Data: res, Inc: 1})
 
 	return res, nil
 }
