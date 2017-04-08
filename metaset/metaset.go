@@ -37,7 +37,10 @@ func ReadSet(dir, csvFile string) (Set, error) {
 		start := strings.Trim(row[1], ",")
 		filename := filepath.Join(dir, id+"_"+start+".wav.gz")
 		if _, err := os.Stat(filename); err != nil {
-			continue
+			filename = filepath.Join(dir, id+"_"+start+".wav")
+			if _, err := os.Stat(filename); err != nil {
+				continue
+			}
 		}
 		set = append(set, &Sample{
 			Classes: strings.Split(row[3], ","),
