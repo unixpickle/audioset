@@ -3,7 +3,9 @@ package metaset
 import (
 	"compress/gzip"
 	"errors"
+	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/wav"
@@ -21,18 +23,27 @@ func (s *Sample) Read() ([]float64, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	unzip, err := gzip.NewReader(f)
+
+	var source io.ReadCloser
+	if filepath.Ext(s.Path) == ".gz" {
+		defer f.Close()
+		source, err = gzip.NewReader(f)
+		if err != nil {
+			return nil, essentials.AddCtx("read "+s.Path, err)
+		}
+	} else {
+		source = f
+	}
+
+	sound, err := wav.ReadSound(source)
 	if err != nil {
 		return nil, essentials.AddCtx("read "+s.Path, err)
 	}
-	sound, err := wav.ReadSound(unzip)
-	if err != nil {
+
+	if err := source.Close(); err != nil {
 		return nil, essentials.AddCtx("read "+s.Path, err)
 	}
-	if err := unzip.Close(); err != nil {
-		return nil, essentials.AddCtx("read "+s.Path, err)
-	}
+
 	samps := sound.Samples()
 	ch := sound.Channels()
 	if len(samps)%ch != 0 {

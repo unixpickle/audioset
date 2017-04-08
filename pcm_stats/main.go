@@ -31,7 +31,8 @@ func main() {
 
 	var r RollingAvg
 	for _, item := range listing {
-		if strings.HasSuffix(item.Name(), ".wav.gz") {
+		if strings.HasSuffix(item.Name(), ".wav.gz") ||
+			strings.HasSuffix(item.Name(), ".wav") {
 			path := filepath.Join(dirPath, item.Name())
 			sample := metaset.Sample{Path: path}
 			data, err := sample.Read()

@@ -28,7 +28,8 @@ func main() {
 	}
 
 	for _, item := range listing {
-		if strings.HasSuffix(item.Name(), ".wav.gz") {
+		if strings.HasSuffix(item.Name(), ".wav.gz") ||
+			strings.HasSuffix(item.Name(), ".wav") {
 			path := filepath.Join(dirPath, item.Name())
 			sample := metaset.Sample{Path: path}
 			if _, err := sample.Read(); err != nil {
