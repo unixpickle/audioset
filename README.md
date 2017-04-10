@@ -1,20 +1,11 @@
 # audioset
 
-This is a tool for fetching data from [AudioSet](https://research.google.com/audioset/download.html), a dataset of audio events.
+This is a set of tools for downloading and using [AudioSet](https://research.google.com/audioset/), a dataset of labeled audio files.
 
-# Dependencies
+# What's included
 
- * bash
- * ffmpeg
- * youtube-dl
- * gzip
-
-# Usage
-
-Simply pipe a CSV file from the dataset into download.sh. For example:
-
-```
-$ cat eval_segments.csv | ./download.sh
-```
-
-The WAV files will automatically be downloaded into the current directory and compressed with gzip.
+ * [class_split](class_split) - partition the classes for meta-learning.
+ * [download](download) - download raw WAV files.
+ * [find_bad](find_bad) - find corrupted WAV files from a download.
+ * [metaset](metaset) - Go package for meta-learning with AudioSet.
+ * [pcm_stats](pcm_stats) - compute waveform statistics from WAV files.
