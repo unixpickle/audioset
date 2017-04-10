@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/unixpickle/audioset/metaset"
+	"github.com/unixpickle/audioset"
 	"github.com/unixpickle/essentials"
 )
 
@@ -31,7 +31,7 @@ func main() {
 		if strings.HasSuffix(item.Name(), ".wav.gz") ||
 			strings.HasSuffix(item.Name(), ".wav") {
 			path := filepath.Join(dirPath, item.Name())
-			sample := metaset.Sample{Path: path}
+			sample := audioset.Sample{Path: path}
 			if _, err := sample.Read(); err != nil {
 				fmt.Println(path)
 			}

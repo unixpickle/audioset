@@ -4,6 +4,7 @@ This is a set of tools for downloading and using [AudioSet](https://research.goo
 
 # What's included
 
+ * **this directory** - Go package for using AudioSet.
  * [class_split](class_split) - partition the classes for meta-learning.
  * [download](download) - download raw WAV files.
  * [find_bad](find_bad) - find corrupted WAV files from a download.

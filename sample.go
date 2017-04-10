@@ -1,4 +1,4 @@
-package metaset
+package audioset
 
 import (
 	"compress/gzip"
@@ -12,13 +12,14 @@ import (
 	"github.com/unixpickle/wav"
 )
 
-// Sample stores meta-data about an audio sample.
+// Sample stores meta-data about a raw audio sample.
 type Sample struct {
 	Classes []string
 	Path    string
 }
 
-// Read reads the sample as PCM data.
+// Read reads the sample as mono PCM data.
+// It mixes channels and decompresses if needed.
 func (s *Sample) Read() ([]float64, error) {
 	f, err := os.Open(s.Path)
 	if err != nil {

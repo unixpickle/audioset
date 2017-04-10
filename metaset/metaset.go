@@ -1,58 +1,13 @@
 package metaset
 
 import (
-	"encoding/csv"
 	"math/rand"
-	"os"
-	"path/filepath"
-	"strings"
 
-	"github.com/unixpickle/essentials"
+	"github.com/unixpickle/audioset"
 )
 
-// Set is a set of audio samples.
-type Set []*Sample
-
-// ReadSet reads a dataset by matching filenames in a
-// directory with records from a CSV file.
-func ReadSet(dir, csvFile string) (Set, error) {
-	f, err := os.Open(csvFile)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	r := csv.NewReader(f)
-	r.Comment = '#'
-	r.Comma = ' '
-	r.FieldsPerRecord = 4
-	rows, err := r.ReadAll()
-	if err != nil {
-		essentials.Die("read "+csvFile+":", err)
-	}
-
-	var set Set
-	for _, row := range rows {
-		id := strings.Trim(row[0], ",")
-		start := strings.Trim(row[1], ",")
-		filename := filepath.Join(dir, id+"_"+start+".wav.gz")
-		if _, err := os.Stat(filename); err != nil {
-			filename = filepath.Join(dir, id+"_"+start+".wav")
-			if _, err := os.Stat(filename); err != nil {
-				continue
-			}
-		}
-		set = append(set, &Sample{
-			Classes: strings.Split(row[3], ","),
-			Path:    filename,
-		})
-	}
-
-	return set, nil
-}
-
 // Split splits the set into a training/evaluation set.
-func (s Set) Split(evalClasses []string) (training, eval Set) {
+func Split(s audioset.Set, evalClasses []string) (training, eval audioset.Set) {
 	evalSet := map[string]bool{}
 	for _, c := range evalClasses {
 		evalSet[c] = true
@@ -83,9 +38,10 @@ func (s Set) Split(evalClasses []string) (training, eval Set) {
 // It will be at most numSteps timesteps.
 //
 // Labels are assigned in the range [0, numClasses).
-func (s Set) Episode(numClasses, numSteps int) (samples []*Sample, labels []int) {
+func Episode(s audioset.Set, numClasses, numSteps int) (samples []*audioset.Sample,
+	labels []int) {
 	classes := []string{}
-	byClass := map[string][]*Sample{}
+	byClass := map[string][]*audioset.Sample{}
 	for _, sample := range s {
 		for _, c := range sample.Classes {
 			if byClass[c] == nil {

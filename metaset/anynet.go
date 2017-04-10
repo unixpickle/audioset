@@ -8,6 +8,7 @@ import (
 	"github.com/unixpickle/anynet/anysgd"
 	"github.com/unixpickle/anyvec"
 	"github.com/unixpickle/anyvec/anyvec64"
+	"github.com/unixpickle/audioset"
 	"github.com/unixpickle/essentials"
 )
 
@@ -16,7 +17,8 @@ import (
 //
 // Time-steps in each sequence contain chunkSize samples.
 // The last time-step is padded with 0's as needed.
-func Seq(c anyvec.Creator, batch []*Sample, chunkSize int) ([][]anyvec.Vector, error) {
+func Seq(c anyvec.Creator, batch []*audioset.Sample,
+	chunkSize int) ([][]anyvec.Vector, error) {
 	var seqs [][]anyvec.Vector
 	for _, sample := range batch {
 		pcm, err := sample.Read()
@@ -69,7 +71,7 @@ type Trainer struct {
 	Params []*anydiff.Var
 
 	// Used to produce episodes.
-	Set        Set
+	Set        audioset.Set
 	NumClasses int
 	NumSteps   int
 
@@ -92,7 +94,7 @@ func (t *Trainer) Fetch(s anysgd.SampleList) (anysgd.Batch, error) {
 	var in [][]anyvec.Vector
 	var out [][]anyvec.Vector
 	for i := 0; i < s.Len(); i++ {
-		batch, labels := t.Set.Episode(t.NumClasses, t.NumSteps)
+		batch, labels := Episode(t.Set, t.NumClasses, t.NumSteps)
 		seq, err := Seq(c, batch, t.ChunkSize)
 		if err != nil {
 			return nil, essentials.AddCtx("fetch samples", err)
